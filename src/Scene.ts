@@ -51,11 +51,10 @@ export const useSceneApi = create<SceneApi>((set, get) => ({
   setRotationIncrement: (rotationIncrement) => set({ rotationIncrement }),
   animate: () => {
     // Prevent retriggerring the animation with potentially a different duration
-    const { animating, setRotationIncrement, draw } = get();
+    const { animating, duration, setRotationIncrement, draw, drawRectangles } = get();
     if (animating) return;
 
     set({ animating: true });
-    const { duration, drawRectangles } = get();
     const durationMs = duration * 1000;
     let start: number | null = null;
 
