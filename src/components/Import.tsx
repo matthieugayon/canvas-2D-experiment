@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { useSceneApi } from '../Scene';
-import { sceneSchema } from '../helpers/validation';
+import { serializedSceneSchema } from '../helpers/validation';
 
 export const Import: React.FC = () => {
   const replaceScene = useSceneApi(state => state.replaceScene);
@@ -19,8 +19,8 @@ export const Import: React.FC = () => {
 
         try {
           const jsonData = JSON.parse(text as string);
-          // Validate JSON with our zod scene schema validator
-          const scene = sceneSchema.parse(jsonData);
+          // Validate JSON with our zod serializedScene schema validator
+          const scene = serializedSceneSchema.parse(jsonData);
           replaceScene(scene);
         } catch (error) {
           window.alert('Invalid JSON file');
@@ -31,7 +31,7 @@ export const Import: React.FC = () => {
   };
 
   return (
-    <div className="bg-white text-black font-bold py-6 px-4 rounded border-2 border-black w-full mt-4 shadow-lg">
+    <div className="bg-white text-black font-bold rounded border-2 border-black w-full mt-4 shadow-lg">
       <input
         type="file"
         style={{ display: 'none' }}
@@ -41,7 +41,7 @@ export const Import: React.FC = () => {
       />
       <button
         onClick={handleButtonClick}
-        className="w-full"
+        className="w-full py-6 px-4"
       >
         Import JSON
       </button>

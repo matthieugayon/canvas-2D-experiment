@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Point, Rectangle, Scene } from './types/geometry';
+import { Point, Rectangle, Scene, SerializedScene } from './types/geometry';
 import { generateRandomRectangle, randomColor } from './helpers/random';
 import { drawRectangle, isPointInRotatedRectangle } from './helpers/geometry';
 
@@ -16,11 +16,11 @@ interface SceneApi {
   setDuration: (duration: number) => void;
   setRotationIncrement: (rotationIncrement: number) => void; // in order to store the current rotation increment for hit testing
   animate: () => void;
-  drawRectangles: (rotation: number) => void;
+  drawRectangles: (incrementally: boolean, rotation: number) => void;
   draw: () => void;
   handleCanvasClick: (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => void;
-  getSceneObject: () => Scene;
-  replaceScene: (scene: Scene) => void;
+  getSerializedSceneObject: () => SerializedScene;
+  replaceScene: (loadedScene: SerializedScene) => void;
 }
 
 export const useSceneApi = create<SceneApi>((set, get) => ({
@@ -64,14 +64,14 @@ export const useSceneApi = create<SceneApi>((set, get) => ({
       const rotationIncrement = (360 * progress) / durationMs;
 
       setRotationIncrement(rotationIncrement);
-      drawRectangles(rotationIncrement);
+      drawRectangles(false, rotationIncrement); // incremental = false, we want to draw the whole scene
 
       if (progress < durationMs) {
         requestAnimationFrame(step);
       } else {
         set({ animating: false, rotationIncrement: 0});
-        // redraw the scene with the reset rotation
-        // so the scene does not stutter the next it is redrawn from the animate method
+        // redraw the scene with rotation 0
+        // so the scene does not stutter the next time it is redrawn from the animate method
         // (the rotation increment is always 0 at the beginning of the animation)
         // this uses an extra frame but is necessary to avoid the stutter
         draw()
@@ -80,24 +80,30 @@ export const useSceneApi = create<SceneApi>((set, get) => ({
 
     requestAnimationFrame(step);
   },
-  drawRectangles: (rotation = 0) => {
+  drawRectangles: (incrementally: boolean, rotation: number) => {
     const { ctx, rectangles } = get();
     if (ctx) {
-      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-      rectangles.forEach(rectangle => drawRectangle(ctx, rectangle, rotation));
+      ctx.fillStyle = "#e5e7eb"; // tailwwind's bg-gray-200
+      // because we are not using alpha channel, clear with fillRect instead of clearRect
+      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      rectangles.forEach(rectangle => drawRectangle(ctx, rectangle, rotation, incrementally));
     }
   },
-  draw: (rotation = 0) => {
+  draw: () => {
     const { animating, drawRectangles } = get();
     // if the scene is animating, we don't want to request additional redraws
     if (!animating) {
-      requestAnimationFrame(() => drawRectangles(rotation));
+      // incremental = true, we want to draw the scene incrementally
+      // i.e only the newly added rectangles
+      requestAnimationFrame(() => drawRectangles(true, 0));
     }
   },
   handleCanvasClick: (event) => {
     const { ctx, rectangles, rotationIncrement, changeRectangleColor } = get();
     if (ctx) {
       const { left, top } = ctx.canvas.getBoundingClientRect();
+
+      // normalize the cursor position to the canvas
       const normalizedCursorPosition: Point = {
         x: event.clientX - left,
         y: event.clientY - top
@@ -105,7 +111,7 @@ export const useSceneApi = create<SceneApi>((set, get) => ({
 
       const clickedRectangle = rectangles
         .slice() // copy the array to avoid mutating the state (reverse mutates our copy)
-        .reverse() // front to back
+        .reverse() // we want to hit test in front to back order
         .find(rectangle => isPointInRotatedRectangle(normalizedCursorPosition, rectangle, rotationIncrement));
 
       if (clickedRectangle) {
@@ -113,12 +119,21 @@ export const useSceneApi = create<SceneApi>((set, get) => ({
       }
     }
   },
-  getSceneObject: () => {
+  getSerializedSceneObject: () => {
     const { rectangles, duration } = get();
-    return { rectangles, duration };
+    // filter out drawn property from the rectangles objects
+    const serializedRectangles = rectangles.map(({ drawn, ...rest }) => rest);
+    return { rectangles: serializedRectangles, duration };
   },
-  replaceScene: (scene) => {
+  replaceScene: (loadedScene) => {
     const { draw } = get();
+
+    // reset the drawn state of the rectangles
+    const scene: Scene = {
+      ...loadedScene,
+      rectangles: loadedScene.rectangles.map(rectangle => ({ ...rectangle, drawn: false })),
+    };
+
     set(scene);
     draw();
   }

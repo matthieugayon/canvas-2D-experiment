@@ -18,9 +18,15 @@ export interface Rectangle {
   size: Size;
   angle: number;
   color: string;
+  drawn: boolean;
 }
 
 export interface Scene {
   rectangles: Rectangle[];
+  duration: number;
+}
+
+export interface SerializedScene {
+  rectangles: Omit<Rectangle, 'drawn'>[];
   duration: number;
 }

@@ -63,6 +63,7 @@ export const generateRandomRectangle = (canvas: Size): Rectangle => {
     position: squareCenter,
     size,
     angle,
-    color
+    color,
+    drawn: false,
   };
 }

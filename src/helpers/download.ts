@@ -1,6 +1,6 @@
-import { Scene } from '../types/geometry';
+import { SerializedScene } from '../types/geometry';
 
-export const downloadJSON = (data: Scene, filename: string) => {
+export const downloadJSON = (data: SerializedScene, filename: string) => {
   // Convert the data to a JSON string
   const jsonString: string = JSON.stringify(data);
 

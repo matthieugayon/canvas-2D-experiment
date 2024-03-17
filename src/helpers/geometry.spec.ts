@@ -5,7 +5,8 @@ const rectangle = {
   position: { x: 100, y: 100 },
   size: { width: 50, height: 30 },
   angle: 0,
-  color: '#000000'
+  color: '#000000',
+  drawn: false
 };
 
 describe('isPointInRotatedRectangle', () => {

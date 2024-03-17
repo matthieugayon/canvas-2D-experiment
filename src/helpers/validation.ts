@@ -15,9 +15,10 @@ export const rectangleSchema = z.object({
   size: sizeSchema,
   angle: z.number(),
   color: z.string(),
+  drawn: z.boolean(),
 });
 
-export const sceneSchema = z.object({
-  rectangles: z.array(rectangleSchema),
+export const serializedSceneSchema = z.object({
+  rectangles: z.array(rectangleSchema.omit({ drawn: true })),
   duration: z.number(),
 });

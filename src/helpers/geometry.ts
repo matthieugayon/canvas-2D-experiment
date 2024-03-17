@@ -4,7 +4,14 @@ export function degreeToRadian(degree: number): number {
   return (degree * Math.PI) / 180;
 }
 
-export const drawRectangle = (ctx: CanvasRenderingContext2D, rectangle: Rectangle, rotation: number) => {
+export const drawRectangle = (
+  ctx: CanvasRenderingContext2D,
+  rectangle: Rectangle,
+  rotation: number,
+  incrementalMode: boolean
+) => {
+  if (incrementalMode && rectangle.drawn) return;
+
   ctx.save();
   ctx.translate(rectangle.position.x, rectangle.position.y);
   ctx.rotate(degreeToRadian((rectangle.angle + rotation) % 360));
