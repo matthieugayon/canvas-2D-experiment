@@ -11,6 +11,7 @@ const Canvas: React.FC = () => {
       const canvas = canvasRef.current;
 
       // get 2D context
+      // we don't need alpha channel for this application
       const context = canvas.getContext('2d', { alpha: false });
       if (context) {
         // store context in scene store
